@@ -11,4 +11,6 @@ public interface EndpointHitService {
     void create(EndpointHitDto dto);
 
     List<ViewStatsDto> getStats(GetStatsRequest request);
+
+    List<ViewStatsDto> getAllStatsByUris(List<String> uris);
 }

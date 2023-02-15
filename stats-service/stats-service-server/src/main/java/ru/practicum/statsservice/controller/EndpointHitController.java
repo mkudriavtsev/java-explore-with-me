@@ -38,4 +38,10 @@ public class EndpointHitController {
             @RequestParam(name = "unique", defaultValue = "false") Boolean unique) {
         return endpointHitService.getStats(GetStatsRequest.of(start, end, uris, unique));
     }
+
+    @GetMapping("/stats/all")
+    @ResponseStatus(HttpStatus.OK)
+    public List<ViewStatsDto> getAllStatsByUris(@RequestParam(name = "uris") List<String> uris) {
+        return endpointHitService.getAllStatsByUris(uris);
+    }
 }
