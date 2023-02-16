@@ -30,7 +30,9 @@ import ru.practicum.mainservice.service.UserService;
 
 import javax.servlet.http.HttpServletRequest;
 import java.time.LocalDateTime;
-import java.util.*;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Objects;
 
 @Slf4j
 @Service
@@ -91,15 +93,15 @@ public class EventServiceImpl implements EventService {
         Event event = eventRepository.findEventByIdAndInitiatorId(eventId, userId).orElseThrow(() -> {
             throw new NotFoundException("Event with id " + eventId + " not found");
         });
-        if (event.getState().equals(EventState.PUBLISHED)) {
+        if (event.getState() == EventState.PUBLISHED) {
             throw new ConflictException("Only pending or canceled events can be changed");
         }
         eventMapper.patchEventByUserRequest(request, event);
         if (Objects.nonNull(request.getStateAction())) {
-            if (request.getStateAction().equals(UserStateAction.SEND_TO_REVIEW)) {
+            if (request.getStateAction() == UserStateAction.SEND_TO_REVIEW) {
                 event.setState(EventState.PENDING);
             }
-            if (request.getStateAction().equals(UserStateAction.CANCEL_REVIEW)) {
+            if (request.getStateAction() == UserStateAction.CANCEL_REVIEW) {
                 event.setState(EventState.CANCELED);
             }
         }
@@ -112,7 +114,7 @@ public class EventServiceImpl implements EventService {
 
     @Override
     public List<ParticipationRequestDto> getUserEventRequests(Long userId, Long eventId) {
-        List<ParticipationRequest> requests = requestRepository.findRequestsByEventIdAndUserId(userId, eventId);
+        List<ParticipationRequest> requests = requestRepository.findAllByEventInitiatorIdAndEventId(userId, eventId);
         return requestMapper.toDtoList(requests);
     }
 
@@ -177,13 +179,13 @@ public class EventServiceImpl implements EventService {
         Event event = eventRepository.findById(eventId).orElseThrow(() -> {
             throw new NotFoundException("Event with id " + eventId + " not found");
         });
-        if (!event.getState().equals(EventState.PUBLISHED)) {
+        if (event.getState() != EventState.PUBLISHED) {
             if (Objects.nonNull(request.getStateAction())) {
-                if (request.getStateAction().equals(AdminStateAction.PUBLISH_EVENT) &&
-                        event.getState().equals(EventState.PENDING)) {
+                if (request.getStateAction() == AdminStateAction.PUBLISH_EVENT &&
+                        event.getState() == EventState.PENDING) {
                     event.setState(EventState.PUBLISHED);
                     event.setPublishedOn(LocalDateTime.now());
-                } else if (request.getStateAction().equals(AdminStateAction.REJECT_EVENT)) {
+                } else if (request.getStateAction() == AdminStateAction.REJECT_EVENT) {
                     event.setState(EventState.CANCELED);
                 } else {
                     throw new WrongStateException(
@@ -211,8 +213,8 @@ public class EventServiceImpl implements EventService {
             Event event) {
         EventRequestStatusUpdateResult result = new EventRequestStatusUpdateResult();
         for (ParticipationRequest req : requests) {
-            if (req.getStatus().equals(RequestStatus.PENDING)) {
-                if (status.equals(ParticipationRequestStatus.CONFIRMED)) {
+            if (req.getStatus() == RequestStatus.PENDING) {
+                if (status == ParticipationRequestStatus.CONFIRMED) {
                     req.setStatus(RequestStatus.CONFIRMED);
                     event.setConfirmedRequests(event.getConfirmedRequests() + 1);
                     result.getConfirmedRequests().add(requestMapper.toDto(req));
@@ -233,23 +235,22 @@ public class EventServiceImpl implements EventService {
             Event event) {
         EventRequestStatusUpdateResult result = new EventRequestStatusUpdateResult();
         for (ParticipationRequest req : requests) {
-            if (req.getStatus().equals(RequestStatus.PENDING)) {
-                if (status.equals(ParticipationRequestStatus.CONFIRMED)) {
-                    long limit = event.getParticipantLimit() - event.getConfirmedRequests();
-                    if (limit > 0) {
-                        req.setStatus(RequestStatus.CONFIRMED);
-                        event.setConfirmedRequests(event.getConfirmedRequests() + 1);
-                        result.getConfirmedRequests().add(requestMapper.toDto(req));
-                    } else {
-                        req.setStatus(RequestStatus.REJECTED);
-                        result.getRejectedRequests().add(requestMapper.toDto(req));
-                    }
+            if (req.getStatus() != RequestStatus.PENDING) {
+                throw new ConflictException("Can only confirm PENDING requests");
+            }
+            if (status == ParticipationRequestStatus.CONFIRMED) {
+                int freeSpace = event.getParticipantLimit() - event.getConfirmedRequests();
+                if (freeSpace > 0) {
+                    req.setStatus(RequestStatus.CONFIRMED);
+                    event.setConfirmedRequests(event.getConfirmedRequests() + 1);
+                    result.getConfirmedRequests().add(requestMapper.toDto(req));
                 } else {
                     req.setStatus(RequestStatus.REJECTED);
                     result.getRejectedRequests().add(requestMapper.toDto(req));
                 }
             } else {
-                throw new ConflictException("Can only confirm PENDING requests");
+                req.setStatus(RequestStatus.REJECTED);
+                result.getRejectedRequests().add(requestMapper.toDto(req));
             }
         }
         return result;

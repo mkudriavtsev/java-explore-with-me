@@ -52,11 +52,8 @@ public class CompilationServiceImpl implements CompilationService {
     @Override
     public List<CompilationDto> getAll(Boolean pinned, Integer from, Integer size) {
         PageRequest page = PageRequest.of(from / size, size);
-        if (Objects.isNull(pinned)) {
-            return compilationMapper.toDtoList(compilationRepository.findAll(page).getContent());
-        } else {
-            return compilationMapper.toDtoList(compilationRepository.findAllByPinned(pinned, page).getContent());
-        }
+        return Objects.isNull(pinned) ? compilationMapper.toDtoList(compilationRepository.findAll(page).getContent()) :
+                compilationMapper.toDtoList(compilationRepository.findAllByPinned(pinned, page).getContent());
     }
 
     @Override

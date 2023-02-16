@@ -21,8 +21,10 @@ import java.util.List;
 @Transactional(readOnly = true)
 public class CategoryServiceImpl implements CategoryService {
 
+    private static final String CATEGORY_NOT_FOUND = "Category with id %d not found";
     private final CategoryRepository categoryRepository;
     private final CategoryMapper categoryMapper;
+
 
     @Override
     @Transactional
@@ -36,7 +38,7 @@ public class CategoryServiceImpl implements CategoryService {
     @Transactional
     public CategoryDto patch(CategoryDto dto, Long id) {
         Category category = categoryRepository.findById(id).orElseThrow(() -> {
-            throw new NotFoundException("Category with id " + id + " not found");
+            throw new NotFoundException(String.format(CATEGORY_NOT_FOUND, id));
         });
         categoryMapper.patchCategory(dto, category);
         log.info("Category with id {} updated", category.getId());
@@ -47,12 +49,8 @@ public class CategoryServiceImpl implements CategoryService {
     @Transactional
     public void delete(Long id) {
         if (!categoryRepository.existsById(id)) {
-            throw new NotFoundException("Category with id " + id + " not found");
+            throw new NotFoundException(String.format(CATEGORY_NOT_FOUND, id));
         }
-        //TODO
-        /*if (eventRepository.existsByCategory_Id(id)) {
-            throw new ConflictException("The category is not empty");
-        }*/
         categoryRepository.deleteById(id);
         log.info("Category with id {} deleted", id);
     }
@@ -67,7 +65,7 @@ public class CategoryServiceImpl implements CategoryService {
     @Override
     public CategoryDto getById(Long id) {
         Category category = categoryRepository.findById(id).orElseThrow(() -> {
-            throw new NotFoundException("Category with id " + id + " not found");
+            throw new NotFoundException(String.format(CATEGORY_NOT_FOUND, id));
         });
         return categoryMapper.toDto(category);
     }
@@ -75,7 +73,7 @@ public class CategoryServiceImpl implements CategoryService {
     @Override
     public Category getEntityById(Long id) {
         return categoryRepository.findById(id).orElseThrow(() -> {
-            throw new NotFoundException("Category with id " + id + " not found");
+            throw new NotFoundException(String.format(CATEGORY_NOT_FOUND, id));
         });
     }
 }

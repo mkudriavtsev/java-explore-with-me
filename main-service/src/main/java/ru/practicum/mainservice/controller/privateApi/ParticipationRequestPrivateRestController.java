@@ -13,7 +13,7 @@ import java.util.List;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping(path = "/users/{userId}/requests")
-public class ParticipationRequestPrivateRestControllerV1 {
+public class ParticipationRequestPrivateRestController {
 
     private final ParticipationRequestService requestService;
 

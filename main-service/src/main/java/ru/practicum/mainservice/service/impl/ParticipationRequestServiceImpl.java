@@ -42,7 +42,7 @@ public class ParticipationRequestServiceImpl implements ParticipationRequestServ
         if (event.getInitiator().getId().equals(userId)) {
             throw new ConflictException("You cannot make a request to participate in your event");
         }
-        if (!event.getState().equals(EventState.PUBLISHED)) {
+        if (event.getState() != EventState.PUBLISHED) {
             throw new ConflictException("You cannot make a request to participate in an unpublished event");
         }
         if (event.getParticipantLimit() != 0 && (event.getParticipantLimit() - event.getConfirmedRequests()) <= 0) {

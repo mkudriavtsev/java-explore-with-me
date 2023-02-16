@@ -14,7 +14,7 @@ import javax.validation.Valid;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping(path = "/admin/categories")
-public class CategoryAdminRestControllerV1 {
+public class CategoryAdminRestController {
 
     private final CategoryService categoryService;
 
