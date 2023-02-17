@@ -51,4 +51,9 @@ public class EndpointHitServiceImpl implements EndpointHitService {
             }
         }
     }
+
+    @Override
+    public List<ViewStatsDto> getAllStatsByUris(List<String> uris) {
+        return endpointHitRepository.getAllViewStatsByUriIn(uris);
+    }
 }
