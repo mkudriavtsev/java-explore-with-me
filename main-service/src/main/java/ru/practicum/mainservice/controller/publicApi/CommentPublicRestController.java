@@ -30,9 +30,7 @@ public class CommentPublicRestController {
     @GetMapping("/comments/search")
     @ResponseStatus(HttpStatus.OK)
     public List<CommentDto> search(
-            @RequestParam String text,
-            @RequestParam(name = "from", defaultValue = "0") @PositiveOrZero Integer from,
-            @RequestParam(name = "size", defaultValue = "10") @Positive Integer size) {
-        return commentService.search(text, from, size);
+            @RequestParam String text) {
+        return commentService.search(text);
     }
 }

@@ -7,7 +7,8 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import ru.practicum.mainservice.dto.comment.CommentDto;
 import ru.practicum.mainservice.dto.comment.NewCommentDto;
 import ru.practicum.mainservice.dto.comment.UpdateCommentDto;
@@ -24,6 +25,7 @@ import ru.practicum.mainservice.repository.EventRepository;
 import ru.practicum.mainservice.repository.UserRepository;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -31,8 +33,6 @@ import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class CommentServiceImplTest {
-
-    private static final Sort SORT_BY_CREATED_TIME = Sort.by(Sort.Direction.DESC, "created");
 
     @InjectMocks
     private CommentServiceImpl commentService;
@@ -123,27 +123,126 @@ class CommentServiceImplTest {
         when(commentRepository.saveAndFlush(any(Comment.class))).thenReturn(updatedComment);
         CommentDto expectedDto = commentMapper.toDto(updatedComment);
 
+        CommentDto actualDto = commentService.patch(dto, userId);
 
+        assertEquals(expectedDto, actualDto);
+    }
+
+    @Test
+    void patch_whenEventNotFound_thenNotFoundExceptionThrown() {
+        Long userId = 1L;
+        Long commentId = 1L;
+        UpdateCommentDto dto = new UpdateCommentDto();
+        dto.setId(commentId);
+        dto.setText("Updated Text");
+        when(commentRepository.findById(commentId)).thenReturn(Optional.empty());
+
+        assertThrows(NotFoundException.class,
+                () -> commentService.patch(dto, userId));
+        verify(commentRepository, never()).saveAndFlush(any(Comment.class));
+    }
+
+    @Test
+    void patch_whenNotAuthorUpdate_thenConflictExceptionThrown() {
+        Long userId = 2L;
+        Long commentId = 1L;
+        UpdateCommentDto dto = new UpdateCommentDto();
+        dto.setId(commentId);
+        dto.setText("Updated Text");
+        Comment comment = getComment(1L);
+        when(commentRepository.findById(commentId)).thenReturn(Optional.of(comment));
+
+        assertThrows(ConflictException.class,
+                () -> commentService.patch(dto, userId));
+        verify(commentRepository, never()).saveAndFlush(any(Comment.class));
+    }
+
+    @Test
+    void patch_whenEventStateNotPublished_thenConflictExceptionThrown() {
+        Long userId = 1L;
+        Long commentId = 1L;
+        UpdateCommentDto dto = new UpdateCommentDto();
+        dto.setId(commentId);
+        dto.setText("Updated Text");
+        Comment comment = getComment(1L);
+        comment.getEvent().setState(EventState.PENDING);
+        when(commentRepository.findById(commentId)).thenReturn(Optional.of(comment));
+
+        assertThrows(ConflictException.class,
+                () -> commentService.patch(dto, userId));
+        verify(commentRepository, never()).saveAndFlush(any(Comment.class));
     }
 
     @Test
     void getOwn() {
+        Long userId = 1L;
+        List<Comment> comments = List.of(getComment(1L));
+        List<CommentDto> expectedDtos = commentMapper.toDtoList(comments);
+        when(commentRepository.findAllByAuthorId(userId)).thenReturn(comments);
+
+        List<CommentDto> actualDtos = commentService.getOwn(userId);
+
+        assertEquals(expectedDtos, actualDtos);
     }
 
     @Test
     void getEventComments() {
+        Long eventId = 1L;
+        List<Comment> comments = List.of(getComment(1L));
+        List<CommentDto> expectedDtos = commentMapper.toDtoList(comments);
+        when(commentRepository.findAllByEventId(eq(eventId), any(PageRequest.class))).thenReturn(new PageImpl<>(comments));
+
+        List<CommentDto> actualDtos = commentService.getEventComments(eventId, 0, 10);
+
+        assertEquals(expectedDtos, actualDtos);
     }
 
     @Test
-    void deleteById() {
+    void deleteById_whenCommentFound_thenCommentDeleted() {
+        Long commentId = 1L;
+        when(commentRepository.existsById(commentId)).thenReturn(Boolean.TRUE);
+
+        commentService.deleteById(commentId);
+
+        verify(commentRepository).deleteById(commentId);
+    }
+
+    @Test
+    void deleteById_whenCommentNotFound_thenNotFoundExceptionThrown() {
+        Long commentId = 1L;
+        when(commentRepository.existsById(commentId)).thenReturn(Boolean.FALSE);
+
+        assertThrows(NotFoundException.class,
+                () -> commentService.deleteById(commentId));
     }
 
     @Test
     void search() {
+        String text = "text";
+        List<Comment> comments = List.of(getComment(1L));
+        List<CommentDto> expectedDtos = commentMapper.toDtoList(comments);
+        when(commentRepository.search(text)).thenReturn(comments);
+
+        List<CommentDto> actualDtos = commentService.search(text);
+
+        assertEquals(expectedDtos, actualDtos);
     }
 
     @Test
-    void patchByAdmin() {
+    void patchByAdmin_whenInvoked_thenUpdateComment() {
+        Long commentId = 1L;
+        UpdateCommentDto dto = new UpdateCommentDto();
+        dto.setId(commentId);
+        dto.setText("Updated Text");
+        Comment updatedComment = getComment(1L);
+        updatedComment.setText("Updated Text");
+        when(commentRepository.findById(commentId)).thenReturn(Optional.of(getComment(commentId)));
+        when(commentRepository.saveAndFlush(any(Comment.class))).thenReturn(updatedComment);
+        CommentDto expectedDto = commentMapper.toDto(updatedComment);
+
+        CommentDto actualDto = commentService.patchByAdmin(dto);
+
+        assertEquals(expectedDto, actualDto);
     }
 
     private User getAuthor(Long userId) {

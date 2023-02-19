@@ -18,7 +18,7 @@ public interface CommentService {
 
     void deleteById(Long commentId);
 
-    List<CommentDto> search(String text, Integer from, Integer size);
+    List<CommentDto> search(String text);
 
     CommentDto patchByAdmin(UpdateCommentDto dto);
 }

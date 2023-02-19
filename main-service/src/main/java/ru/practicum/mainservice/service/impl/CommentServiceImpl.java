@@ -102,7 +102,7 @@ public class CommentServiceImpl implements CommentService {
     }
 
     @Override
-    public List<CommentDto> search(String text, Integer from, Integer size) {
+    public List<CommentDto> search(String text) {
         if (text.isBlank()) {
             return Collections.emptyList();
         }
