@@ -7,7 +7,8 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.mainservice.dto.comment.CommentDto;
-import ru.practicum.mainservice.dto.comment.CommentRequestDto;
+import ru.practicum.mainservice.dto.comment.NewCommentDto;
+import ru.practicum.mainservice.dto.comment.UpdateCommentDto;
 import ru.practicum.mainservice.exception.ConflictException;
 import ru.practicum.mainservice.exception.NotFoundException;
 import ru.practicum.mainservice.mapper.CommentMapper;
@@ -41,7 +42,7 @@ public class CommentServiceImpl implements CommentService {
 
     @Override
     @Transactional
-    public CommentDto create(CommentRequestDto dto, Long userId, Long eventId) {
+    public CommentDto create(NewCommentDto dto, Long userId, Long eventId) {
         Event event = eventRepository.findById(eventId).orElseThrow(() -> {
             throw new NotFoundException(String.format(EVENT_NOT_FOUND, eventId));
         });
@@ -61,9 +62,9 @@ public class CommentServiceImpl implements CommentService {
 
     @Override
     @Transactional
-    public CommentDto patch(CommentRequestDto dto, Long userId, Long commentId) {
-        Comment comment = commentRepository.findById(commentId).orElseThrow(() -> {
-            throw new NotFoundException(String.format(COMMENT_NOT_FOUND, commentId));
+    public CommentDto patch(UpdateCommentDto dto, Long userId) {
+        Comment comment = commentRepository.findById(dto.getId()).orElseThrow(() -> {
+            throw new NotFoundException(String.format(COMMENT_NOT_FOUND, dto.getId()));
         });
         if (!comment.getAuthor().getId().equals(userId)) {
             throw new ConflictException("Only the author of the comment can make changes");
@@ -73,7 +74,8 @@ public class CommentServiceImpl implements CommentService {
         }
         commentMapper.patchComment(dto, comment);
         log.info("Comment with id {} updated", comment.getId());
-        return commentMapper.toDto(comment);
+        Comment updatedComment = commentRepository.saveAndFlush(comment);
+        return commentMapper.toDto(updatedComment);
     }
 
     @Override
@@ -106,5 +108,17 @@ public class CommentServiceImpl implements CommentService {
         }
         List<Comment> comments = commentRepository.search(text);
         return commentMapper.toDtoList(comments);
+    }
+
+    @Override
+    @Transactional
+    public CommentDto patchByAdmin(UpdateCommentDto dto) {
+        Comment comment = commentRepository.findById(dto.getId()).orElseThrow(() -> {
+            throw new NotFoundException(String.format(COMMENT_NOT_FOUND, dto.getId()));
+        });
+        commentMapper.patchComment(dto, comment);
+        log.info("Comment with id {} updated", comment.getId());
+        Comment updatedComment = commentRepository.saveAndFlush(comment);
+        return commentMapper.toDto(updatedComment);
     }
 }

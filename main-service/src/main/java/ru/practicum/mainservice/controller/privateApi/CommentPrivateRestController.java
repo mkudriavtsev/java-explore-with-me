@@ -5,7 +5,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import ru.practicum.mainservice.dto.comment.CommentDto;
-import ru.practicum.mainservice.dto.comment.CommentRequestDto;
+import ru.practicum.mainservice.dto.comment.NewCommentDto;
+import ru.practicum.mainservice.dto.comment.UpdateCommentDto;
 import ru.practicum.mainservice.service.CommentService;
 
 import javax.validation.Valid;
@@ -21,18 +22,17 @@ public class CommentPrivateRestController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public CommentDto create(@Valid @RequestBody CommentRequestDto dto,
+    public CommentDto create(@Valid @RequestBody NewCommentDto dto,
                              @RequestParam Long eventId,
                              @PathVariable Long userId) {
         return commentService.create(dto, userId, eventId);
     }
 
-    @PatchMapping("/{commentId}")
+    @PatchMapping
     @ResponseStatus(HttpStatus.OK)
-    public CommentDto patch(@Valid @RequestBody CommentRequestDto dto,
-                            @PathVariable Long userId,
-                            @PathVariable Long commentId) {
-        return commentService.patch(dto, userId, commentId);
+    public CommentDto patch(@Valid @RequestBody UpdateCommentDto dto,
+                            @PathVariable Long userId) {
+        return commentService.patch(dto, userId);
     }
 
     @GetMapping

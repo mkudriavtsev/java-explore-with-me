@@ -3,6 +3,7 @@ package ru.practicum.mainservice.model;
 import lombok.*;
 import org.hibernate.Hibernate;
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 
 import javax.persistence.*;
 import java.time.LocalDateTime;
@@ -29,6 +30,9 @@ public class Comment {
     @CreationTimestamp
     @Column(name = "created", nullable = false)
     private LocalDateTime created;
+    @UpdateTimestamp
+    @Column(name = "updated")
+    private LocalDateTime updated;
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "event_id", nullable = false)
     private Event event;

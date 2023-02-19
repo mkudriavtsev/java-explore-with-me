@@ -1,15 +1,16 @@
 package ru.practicum.mainservice.service;
 
 import ru.practicum.mainservice.dto.comment.CommentDto;
-import ru.practicum.mainservice.dto.comment.CommentRequestDto;
+import ru.practicum.mainservice.dto.comment.NewCommentDto;
+import ru.practicum.mainservice.dto.comment.UpdateCommentDto;
 
 import java.util.List;
 
 public interface CommentService {
 
-    CommentDto create(CommentRequestDto dto, Long userId, Long eventId);
+    CommentDto create(NewCommentDto dto, Long userId, Long eventId);
 
-    CommentDto patch(CommentRequestDto dto, Long userId, Long commentId);
+    CommentDto patch(UpdateCommentDto dto, Long userId);
 
     List<CommentDto> getOwn(Long userId);
 
@@ -18,4 +19,6 @@ public interface CommentService {
     void deleteById(Long commentId);
 
     List<CommentDto> search(String text, Integer from, Integer size);
+
+    CommentDto patchByAdmin(UpdateCommentDto dto);
 }
