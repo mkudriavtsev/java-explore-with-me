@@ -14,4 +14,17 @@ The app allows users to share information about interesting events and find comp
 * Make compilations and pin it to the main board
 * Collection of visitor statistics in the statistics service
 
-[Feature comments pull request](https://github.com/mkudryavtsev90/java-explore-with-me/pull/3)
+### Technology stack:
+Java 11, Spring Boot, Docker, PostgreSQL, Maven, Spring Data JPA
+
+### System requirements:
+* JDK 11
+* Docker
+
+### Startup instructions:
+1. Download zip-file
+2. Unpack zip-файл
+3. Open app in IntellijIdea
+4. mvn clean package
+5. docker-compose up
+6. Test app with postman tests collection in postman package
